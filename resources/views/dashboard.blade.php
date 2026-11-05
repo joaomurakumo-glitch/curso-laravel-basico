@@ -55,20 +55,43 @@
                     <h1>Visão geral<span class="heading-period">.</span></h1>
                     <p class="heading-copy">Acompanhe o que entra, o que sai e o que fica.</p>
                 </div>
-                <button class="button button-primary" type="button" data-open-transaction>
+                <button class="button button-primary" type="button" data-open-transaction aria-keyshortcuts="N" title="Atalho do teclado: N">
                     <span class="button-plus" aria-hidden="true">+</span>
                     Novo lançamento
+                    <kbd class="button-shortcut" aria-hidden="true">N</kbd>
                 </button>
             </section>
 
             @if (session('status'))
-                <div class="flash-message" role="status">{{ session('status') }}</div>
+                <div class="flash-message" role="status">
+                    <span>{{ session('status') }}</span>
+                    @if (session('undo_transaction_available'))
+                        <form method="POST" action="{{ route('transactions.restore', array_merge(request()->query(), ['transaction' => session('undo_transaction_id')])) }}">
+                            @csrf
+                            <button class="flash-action" type="submit" data-loading-text="Restaurando...">Desfazer</button>
+                        </form>
+                    @elseif (session('redo_transaction_id'))
+                        <form method="POST" action="{{ route('transactions.destroy', array_merge(request()->query(), ['transaction' => session('redo_transaction_id')])) }}">
+                            @csrf
+                            @method('DELETE')
+                            <button class="flash-action" type="submit" data-loading-text="Removendo...">Refazer</button>
+                        </form>
+                    @endif
+                    <button class="flash-dismiss" type="button" data-dismiss-alert aria-label="Dispensar aviso">×</button>
+                </div>
             @endif
 
             @if ($errors->any())
-                <div class="flash-message flash-error" role="alert">
-                    <strong>Não foi possível salvar.</strong>
-                    <span>{{ $errors->first() }}</span>
+                <div class="flash-message flash-error" role="alert" aria-labelledby="validation-summary-title">
+                    <div>
+                        <strong id="validation-summary-title">Não foi possível salvar. Corrija os campos indicados:</strong>
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    <button class="flash-dismiss" type="button" data-dismiss-alert aria-label="Dispensar erros">×</button>
                 </div>
             @endif
 
@@ -251,13 +274,13 @@
             </section>
 
             <footer class="page-footer">
-                <span>Seu resumo considera todos os lançamentos do mês.</span>
-                <span>Valores em reais <i aria-hidden="true">·</i> atualizados agora</span>
+                <span>Seu resumo considera todos os lançamentos do mês selecionado.</span>
+                <span>Valores em reais</span>
             </footer>
         </main>
     </div>
 
-    <dialog class="app-dialog" id="transaction-dialog" aria-labelledby="transaction-dialog-title" data-reopen="{{ $errors->any() && ! $errors->has('name') && ! $errors->has('color') ? 'true' : 'false' }}">
+    <dialog class="app-dialog" id="transaction-dialog" aria-labelledby="transaction-dialog-title" data-reopen="{{ $errors->has('description') || $errors->has('amount') || $errors->has('date') || $errors->has('category_id') || $errors->has('notes') || ($errors->has('type') && old('description') !== null) ? 'true' : 'false' }}">
         <form class="dialog-form" id="transaction-form" method="POST" action="{{ route('transactions.store', request()->only(['month', 'type', 'category'])) }}" data-store-url="{{ route('transactions.store', request()->only(['month', 'type', 'category'])) }}">
             @csrf
             <input id="transaction-method" type="hidden" name="_method" value="">
@@ -271,40 +294,60 @@
                 </div>
                 <button class="dialog-close" type="button" data-close-dialog aria-label="Fechar">×</button>
             </div>
-            <div class="type-switch" role="group" aria-label="Tipo do lançamento">
-                <button class="type-option is-selected" type="button" data-type-option="expense">Despesa</button>
-                <button class="type-option" type="button" data-type-option="income">Receita</button>
+            <div class="type-switch" role="group" aria-label="Tipo do lançamento" aria-invalid="{{ $errors->has('type') && old('description') !== null ? 'true' : 'false' }}" @if ($errors->has('type') && old('description') !== null) aria-describedby="transaction-type-error" tabindex="-1" @endif>
+                <button class="type-option {{ old('type', 'expense') === 'expense' ? 'is-selected' : '' }}" type="button" data-type-option="expense" aria-pressed="{{ old('type', 'expense') === 'expense' ? 'true' : 'false' }}">Despesa</button>
+                <button class="type-option {{ old('type') === 'income' ? 'is-selected' : '' }}" type="button" data-type-option="income" aria-pressed="{{ old('type') === 'income' ? 'true' : 'false' }}">Receita</button>
                 <input id="transaction-type" type="hidden" name="type" value="{{ old('type', 'expense') }}">
             </div>
+            @error('type')
+                @if (old('description') !== null)
+                    <p class="field-error" id="transaction-type-error">{{ $message }}</p>
+                @endif
+            @enderror
             <label class="field-label" for="transaction-description">Descrição</label>
-            <input class="text-input" id="transaction-description" name="description" maxlength="120" value="{{ old('description') }}" placeholder="Ex.: Mercado da semana" required>
+            <input class="text-input" id="transaction-description" name="description" maxlength="120" value="{{ old('description') }}" placeholder="Ex.: Mercado da semana" required aria-invalid="{{ $errors->has('description') ? 'true' : 'false' }}" @if ($errors->has('description')) aria-describedby="transaction-description-error" @endif>
+            @error('description')
+                <p class="field-error" id="transaction-description-error">{{ $message }}</p>
+            @enderror
             <div class="form-row">
                 <div>
                     <label class="field-label" for="transaction-amount">Valor</label>
-                    <div class="currency-input"><span>R$</span><input class="text-input" id="transaction-amount" name="amount" type="number" min="0.01" max="9999999999.99" step="0.01" value="{{ old('amount') }}" placeholder="0,00" required></div>
+                    <div class="currency-input"><span>R$</span><input class="text-input" id="transaction-amount" name="amount" type="number" min="0.01" max="9999999999.99" step="0.01" value="{{ old('amount') }}" placeholder="0.00" required aria-invalid="{{ $errors->has('amount') ? 'true' : 'false' }}" @if ($errors->has('amount')) aria-describedby="transaction-amount-error" @endif></div>
+                    @error('amount')
+                        <p class="field-error" id="transaction-amount-error">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="field-label" for="transaction-date">Data</label>
-                    <input class="text-input" id="transaction-date" name="date" type="date" value="{{ old('date', now()->format('Y-m-d')) }}" required>
+                    <input class="text-input" id="transaction-date" name="date" type="date" value="{{ old('date', now()->format('Y-m-d')) }}" required aria-invalid="{{ $errors->has('date') ? 'true' : 'false' }}" @if ($errors->has('date')) aria-describedby="transaction-date-error" @endif>
+                    @error('date')
+                        <p class="field-error" id="transaction-date-error">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
             <label class="field-label" for="transaction-category">Categoria</label>
-            <select class="text-input" id="transaction-category" name="category_id" required>
+            <select class="text-input" id="transaction-category" name="category_id" required aria-invalid="{{ $errors->has('category_id') ? 'true' : 'false' }}" @if ($errors->has('category_id')) aria-describedby="transaction-category-error" @endif>
                 <option value="">Selecione uma categoria</option>
                 @foreach ($allCategories as $category)
                     <option value="{{ $category->id }}" data-category-type="{{ $category->type }}" @selected((string) old('category_id') === (string) $category->id)>{{ $category->name }}</option>
                 @endforeach
             </select>
+            @error('category_id')
+                <p class="field-error" id="transaction-category-error">{{ $message }}</p>
+            @enderror
             <label class="field-label" for="transaction-notes">Observação <span class="optional-label">OPCIONAL</span></label>
-            <textarea class="text-input notes-input" id="transaction-notes" name="notes" maxlength="500" rows="3" placeholder="Um detalhe para lembrar depois">{{ old('notes') }}</textarea>
+            <textarea class="text-input notes-input" id="transaction-notes" name="notes" maxlength="500" rows="3" placeholder="Um detalhe para lembrar depois" aria-invalid="{{ $errors->has('notes') ? 'true' : 'false' }}" @if ($errors->has('notes')) aria-describedby="transaction-notes-error" @endif>{{ old('notes') }}</textarea>
+            @error('notes')
+                <p class="field-error" id="transaction-notes-error">{{ $message }}</p>
+            @enderror
             <div class="dialog-actions">
                 <button class="button button-quiet" type="button" data-close-dialog>Cancelar</button>
-                <button class="button button-primary" type="submit" id="transaction-submit">Salvar lançamento</button>
+                <button class="button button-primary" type="submit" id="transaction-submit" data-loading-text="Salvando lançamento...">Salvar lançamento</button>
             </div>
         </form>
     </dialog>
 
-    <dialog class="app-dialog category-dialog" id="category-dialog" aria-labelledby="category-dialog-title" data-reopen="{{ $errors->has('name') || $errors->has('color') || $errors->has('type') ? 'true' : 'false' }}">
+    <dialog class="app-dialog category-dialog" id="category-dialog" aria-labelledby="category-dialog-title" data-reopen="{{ $errors->has('name') || $errors->has('color') || ($errors->has('type') && old('name') !== null) ? 'true' : 'false' }}">
         <div class="dialog-heading">
             <div>
                 <p class="eyebrow">ORGANIZAÇÃO</p>
@@ -331,22 +374,33 @@
             <div class="form-row category-create-row">
                 <div>
                     <label class="field-label" for="new-category-name">Nome</label>
-                    <input class="text-input" id="new-category-name" name="name" maxlength="40" value="{{ old('name') }}" placeholder="Ex.: Pets" required>
+                    <input class="text-input" id="new-category-name" name="name" maxlength="40" value="{{ old('name') }}" placeholder="Ex.: Pets" required aria-invalid="{{ $errors->has('name') ? 'true' : 'false' }}" @if ($errors->has('name')) aria-describedby="new-category-name-error" @endif>
+                    @error('name')
+                        <p class="field-error" id="new-category-name-error">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="field-label" for="new-category-type">Tipo</label>
-                    <select class="text-input" id="new-category-type" name="type" required>
+                    <select class="text-input" id="new-category-type" name="type" required aria-invalid="{{ $errors->has('type') && old('name') !== null ? 'true' : 'false' }}" @if ($errors->has('type') && old('name') !== null) aria-describedby="new-category-type-error" @endif>
                         <option value="expense" @selected(old('type', 'expense') === 'expense')>Despesa</option>
                         <option value="income" @selected(old('type') === 'income')>Receita</option>
                     </select>
+                    @error('type')
+                        @if (old('name') !== null)
+                            <p class="field-error" id="new-category-type-error">{{ $message }}</p>
+                        @endif
+                    @enderror
                 </div>
                 <div>
                     <label class="field-label" for="new-category-color">Cor</label>
-                    <input class="color-input" id="new-category-color" name="color" type="color" value="{{ old('color', '#66804f') }}" required>
+                    <input class="color-input" id="new-category-color" name="color" type="color" value="{{ old('color', '#66804f') }}" required aria-invalid="{{ $errors->has('color') ? 'true' : 'false' }}" @if ($errors->has('color')) aria-describedby="new-category-color-error" @endif>
+                    @error('color')
+                        <p class="field-error" id="new-category-color-error">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
             <div class="dialog-actions">
-                <button class="button button-primary" type="submit">Adicionar categoria</button>
+                <button class="button button-primary" type="submit" data-loading-text="Salvando categoria...">Adicionar categoria</button>
             </div>
         </form>
     </dialog>

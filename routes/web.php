@@ -10,5 +10,6 @@ Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
 Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update');
 Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
+Route::post('/transactions/{transaction}/restore', [TransactionController::class, 'restore'])->name('transactions.restore');
 
 Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');

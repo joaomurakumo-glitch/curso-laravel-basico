@@ -136,9 +136,62 @@ class ExpenseManagerTest extends TestCase
             'transaction' => $transaction,
             'month' => '2026-05',
         ]))->assertRedirectToRoute('dashboard', ['month' => '2026-05'])
-            ->assertSessionHas('status', 'Lançamento removido.');
+            ->assertSessionHas('status', 'Lançamento removido.')
+            ->assertSessionHas('undo_transaction_id', $transaction->id);
 
-        $this->assertDatabaseMissing('transactions', ['id' => $transaction->id]);
+        $this->assertDatabaseMissing('transactions', [
+            'id' => $transaction->id,
+            'deleted_at' => null,
+        ]);
+
+        $this->get(route('dashboard', ['month' => '2026-05']))
+            ->assertOk()
+            ->assertSee('Desfazer');
+
+        $this->post(route('transactions.restore', [
+            'transaction' => $transaction->id,
+            'month' => '2026-05',
+        ]))->assertRedirectToRoute('dashboard', ['month' => '2026-05'])
+            ->assertSessionHas('status', 'Lançamento restaurado.')
+            ->assertSessionHas('redo_transaction_id', $transaction->id);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'deleted_at' => null,
+        ]);
+
+        $this->get(route('dashboard', ['month' => '2026-05']))
+            ->assertOk()
+            ->assertSee('Refazer');
+
+        $this->delete(route('transactions.destroy', [
+            'transaction' => $transaction->id,
+            'month' => '2026-05',
+        ]))->assertRedirectToRoute('dashboard', ['month' => '2026-05'])
+            ->assertSessionHas('status', 'Lançamento removido.')
+            ->assertSessionHas('undo_transaction_id', $transaction->id);
+
+        $this->assertDatabaseMissing('transactions', [
+            'id' => $transaction->id,
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_cannot_restore_a_transaction_without_its_undo_session(): void
+    {
+        $category = Category::factory()->create([
+            'type' => 'expense',
+        ]);
+        $transaction = Transaction::factory()->for($category)->create();
+        $transaction->delete();
+
+        $this->post(route('transactions.restore', ['transaction' => $transaction->id]))
+            ->assertNotFound();
+
+        $this->assertDatabaseMissing('transactions', [
+            'id' => $transaction->id,
+            'deleted_at' => null,
+        ]);
     }
 
     public function test_rejects_a_transaction_category_with_a_different_type(): void
@@ -148,7 +201,8 @@ class ExpenseManagerTest extends TestCase
             'type' => 'expense',
         ]);
 
-        $response = $this->from(route('dashboard', ['month' => '2026-05']))
+        $response = $this->followingRedirects()
+            ->from(route('dashboard', ['month' => '2026-05']))
             ->post(route('transactions.store', ['month' => '2026-05']), [
                 'description' => 'Entrada incompatível',
                 'amount' => '100.00',
@@ -157,10 +211,11 @@ class ExpenseManagerTest extends TestCase
                 'category_id' => $category->id,
             ]);
 
-        $response->assertRedirectBack()
-            ->assertSessionHasErrors([
-                'category_id' => 'Escolha uma categoria compatível com o tipo do lançamento.',
-            ]);
+        $response->assertOk()
+            ->assertSee('Escolha uma categoria compatível com o tipo do lançamento.')
+            ->assertSee('Corrija os campos indicados')
+            ->assertSee('transaction-category-error')
+            ->assertSee('aria-invalid="true"', false);
 
         $this->assertDatabaseCount('transactions', 0);
     }

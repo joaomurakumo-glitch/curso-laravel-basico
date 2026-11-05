@@ -34,9 +34,27 @@ class TransactionController extends Controller
     public function destroy(Request $request, Transaction $transaction): RedirectResponse
     {
         $transaction->delete();
+        $request->session()->put('undo_transaction_id', $transaction->id);
 
         return to_route('dashboard', $this->dashboardFilters($request))
-            ->with('status', 'Lançamento removido.');
+            ->with('status', 'Lançamento removido.')
+            ->with('undo_transaction_available', true);
+    }
+
+    public function restore(Request $request, int $transaction): RedirectResponse
+    {
+        if ((int) $request->session()->get('undo_transaction_id') !== $transaction) {
+            abort(404);
+        }
+
+        $deletedTransaction = Transaction::withTrashed()->findOrFail($transaction);
+        $deletedTransaction->restore();
+
+        $request->session()->forget('undo_transaction_id');
+
+        return to_route('dashboard', $this->dashboardFilters($request))
+            ->with('status', 'Lançamento restaurado.')
+            ->with('redo_transaction_id', $transaction);
     }
 
     /**

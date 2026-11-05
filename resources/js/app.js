@@ -71,12 +71,24 @@ document.querySelectorAll('.edit-transaction').forEach((button) => {
 	});
 });
 
-document.querySelectorAll('.delete-form').forEach((form) => {
-	form.addEventListener('submit', (event) => {
-		if (!window.confirm('Remover este lançamento?')) {
-			event.preventDefault();
+document.querySelectorAll('form').forEach((form) => {
+	if (form.method.toLowerCase() !== 'post') {
+		return;
+	}
+
+	form.addEventListener('submit', () => {
+		const submitButton = form.querySelector('[type="submit"]');
+
+		if (submitButton && !submitButton.disabled) {
+			submitButton.disabled = true;
+			submitButton.textContent = submitButton.dataset.loadingText
+				?? (form.classList.contains('delete-form') ? 'Removendo...' : 'Salvando...');
 		}
 	});
+});
+
+document.querySelectorAll('[data-dismiss-alert]').forEach((button) => {
+	button.addEventListener('click', () => button.closest('.flash-message').remove());
 });
 
 document.querySelectorAll('dialog').forEach((dialog) => {
@@ -90,8 +102,29 @@ document.querySelectorAll('dialog').forEach((dialog) => {
 if (document.querySelector('#transaction-dialog').dataset.reopen === 'true') {
 	setTransactionType(transactionType.value);
 	transactionDialog.showModal();
+	transactionDialog.querySelector('[aria-invalid="true"]')?.focus();
 }
 
 if (document.querySelector('#category-dialog').dataset.reopen === 'true') {
 	categoryDialog.showModal();
+	categoryDialog.querySelector('[aria-invalid="true"]')?.focus();
 }
+
+document.addEventListener('keydown', (event) => {
+	const activeElement = document.activeElement;
+	const isEditing = activeElement instanceof HTMLElement
+		&& (activeElement.isContentEditable || ['INPUT', 'SELECT', 'TEXTAREA'].includes(activeElement.tagName));
+
+	if (
+		event.key.toLowerCase() === 'n'
+		&& !event.altKey
+		&& !event.ctrlKey
+		&& !event.metaKey
+		&& !event.repeat
+		&& !isEditing
+		&& !document.querySelector('dialog[open]')
+	) {
+		event.preventDefault();
+		document.querySelector('[data-open-transaction]')?.click();
+	}
+});
