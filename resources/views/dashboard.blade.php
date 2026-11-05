@@ -305,7 +305,7 @@
                 @endif
             @enderror
             <label class="field-label" for="transaction-description">Descrição</label>
-            <input class="text-input" id="transaction-description" name="description" maxlength="120" value="{{ old('description') }}" placeholder="Ex.: Mercado da semana" required aria-invalid="{{ $errors->has('description') ? 'true' : 'false' }}" @if ($errors->has('description')) aria-describedby="transaction-description-error" @endif>
+            <input class="text-input" id="transaction-description" name="description" minlength="3" maxlength="100" data-trim value="{{ old('description') }}" placeholder="Ex.: Mercado da semana" required aria-invalid="{{ $errors->has('description') ? 'true' : 'false' }}" @if ($errors->has('description')) aria-describedby="transaction-description-error" @endif>
             @error('description')
                 <p class="field-error" id="transaction-description-error">{{ $message }}</p>
             @enderror
@@ -374,7 +374,7 @@
             <div class="form-row category-create-row">
                 <div>
                     <label class="field-label" for="new-category-name">Nome</label>
-                    <input class="text-input" id="new-category-name" name="name" maxlength="40" value="{{ old('name') }}" placeholder="Ex.: Pets" required aria-invalid="{{ $errors->has('name') ? 'true' : 'false' }}" @if ($errors->has('name')) aria-describedby="new-category-name-error" @endif>
+                    <input class="text-input" id="new-category-name" name="name" minlength="3" maxlength="100" data-trim value="{{ old('name') }}" placeholder="Ex.: Pets" required aria-invalid="{{ $errors->has('name') ? 'true' : 'false' }}" @if ($errors->has('name')) aria-describedby="new-category-name-error" @endif>
                     @error('name')
                         <p class="field-error" id="new-category-name-error">{{ $message }}</p>
                     @enderror

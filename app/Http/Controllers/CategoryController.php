@@ -17,7 +17,8 @@ class CategoryController extends Controller
             'name' => [
                 'required',
                 'string',
-                'max:40',
+                'min:3',
+                'max:100',
                 Rule::unique('categories', 'name')->where(
                     fn (Builder $query) => $query->where('type', $request->input('type')),
                 ),
@@ -26,6 +27,8 @@ class CategoryController extends Controller
             'color' => ['required', 'hex_color'],
         ], [
             'name.required' => 'Informe o nome da categoria.',
+            'name.min' => 'O nome da categoria deve ter pelo menos 3 caracteres.',
+            'name.max' => 'O nome da categoria pode ter no máximo 100 caracteres.',
             'name.unique' => 'Já existe uma categoria com esse nome para esse tipo.',
             'type.required' => 'Selecione se a categoria é receita ou despesa.',
             'type.in' => 'Selecione um tipo de categoria válido.',

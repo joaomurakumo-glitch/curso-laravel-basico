@@ -56,3 +56,26 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Manutenção dos formulários do CRUD financeiro
+
+### Antes
+
+Os formulários de lançamento e categoria não tinham um limite mínimo de caracteres nos textos. A validação dos valores e das datas precisava de cobertura para situações inválidas e para operações de edição.
+
+### Depois
+
+- Descrição do lançamento e nome da categoria são obrigatórios, aceitam de 3 a 100 caracteres e são normalizados sem espaços nas extremidades.
+- Valores de lançamentos são obrigatórios, positivos, numéricos, limitados a duas casas decimais e ao limite suportado pelo banco.
+- Datas de lançamento precisam corresponder a uma data válida no formato `AAAA-MM-DD`.
+- As regras do servidor são aplicadas tanto na criação quanto na edição de lançamentos; categorias também são validadas no servidor na criação.
+- O navegador complementa a validação com limites HTML e normalização JavaScript. As mensagens do servidor continuam sendo a garantia de integridade.
+- Testes cobrem limites de texto, valores inválidos, datas inexistentes, normalização e rejeição de alterações inválidas.
+
+### Limite do escopo atual
+
+O CRUD existente registra receitas, despesas e categorias. Ele não possui cadastro de pessoas, produtos ou vendas nem campos de e-mail, idade, nascimento, CPF, CEP, telefone, estoque, desconto ou período inicial/final. Essas regras não foram associadas artificialmente a um lançamento financeiro; para validá-las e armazená-las, é necessário criar os cadastros correspondentes.
+
+### Verificação
+
+Execute `php artisan test --compact tests/Feature/ExpenseManagerTest.php` para validar os cenários do CRUD financeiro.

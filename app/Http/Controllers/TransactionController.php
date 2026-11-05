@@ -63,7 +63,7 @@ class TransactionController extends Controller
     private function rules(Request $request): array
     {
         return [
-            'description' => ['required', 'string', 'max:120'],
+            'description' => ['required', 'string', 'min:3', 'max:100'],
             'amount' => ['required', 'numeric', 'decimal:0,2', 'gt:0', 'max:9999999999.99'],
             'type' => ['required', Rule::in(['income', 'expense'])],
             'date' => ['required', 'date_format:Y-m-d'],
@@ -85,7 +85,8 @@ class TransactionController extends Controller
     {
         return [
             'description.required' => 'Informe a descrição do lançamento.',
-            'description.max' => 'A descrição pode ter no máximo 120 caracteres.',
+            'description.min' => 'A descrição deve ter pelo menos 3 caracteres.',
+            'description.max' => 'A descrição pode ter no máximo 100 caracteres.',
             'amount.required' => 'Informe o valor.',
             'amount.numeric' => 'O valor precisa ser numérico.',
             'amount.decimal' => 'O valor pode ter até duas casas decimais.',

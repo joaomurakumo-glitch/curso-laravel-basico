@@ -95,7 +95,7 @@ class ExpenseManagerTest extends TestCase
         ]);
 
         $response = $this->post(route('transactions.store', ['month' => '2026-05']), [
-            'description' => 'Projeto de identidade visual',
+            'description' => '  Projeto de identidade visual  ',
             'amount' => '1250.00',
             'type' => 'income',
             'date' => '2026-05-14',
@@ -118,7 +118,7 @@ class ExpenseManagerTest extends TestCase
             'transaction' => $transaction,
             'month' => '2026-05',
         ]), [
-            'description' => 'Projeto atualizado',
+            'description' => '  Projeto atualizado  ',
             'amount' => '1400.00',
             'type' => 'income',
             'date' => '2026-05-15',
@@ -223,7 +223,7 @@ class ExpenseManagerTest extends TestCase
     public function test_creates_categories_and_rejects_duplicate_names_for_the_same_type(): void
     {
         $response = $this->post(route('categories.store', ['month' => '2026-05']), [
-            'name' => 'Pets',
+            'name' => '  Pets  ',
             'type' => 'expense',
             'color' => '#66804f',
         ]);
@@ -250,5 +250,204 @@ class ExpenseManagerTest extends TestCase
             ]);
 
         $this->assertDatabaseCount('categories', 1);
+    }
+
+    public function test_rejects_transaction_descriptions_shorter_than_three_characters(): void
+    {
+        $category = Category::factory()->create([
+            'type' => 'expense',
+        ]);
+
+        $this->from(route('dashboard', ['month' => '2026-05']))
+            ->post(route('transactions.store', ['month' => '2026-05']), [
+                'description' => 'ab',
+                'amount' => '10.00',
+                'type' => 'expense',
+                'date' => '2026-05-14',
+                'category_id' => $category->id,
+            ])
+            ->assertRedirectBack()
+            ->assertSessionHasErrors([
+                'description' => 'A descrição deve ter pelo menos 3 caracteres.',
+            ]);
+
+        $this->assertDatabaseCount('transactions', 0);
+    }
+
+    public function test_rejects_transaction_descriptions_containing_only_spaces(): void
+    {
+        $category = Category::factory()->create([
+            'type' => 'expense',
+        ]);
+
+        $this->from(route('dashboard', ['month' => '2026-05']))
+            ->post(route('transactions.store', ['month' => '2026-05']), [
+                'description' => '   ',
+                'amount' => '10.00',
+                'type' => 'expense',
+                'date' => '2026-05-14',
+                'category_id' => $category->id,
+            ])
+            ->assertRedirectBack()
+            ->assertSessionHasErrors([
+                'description' => 'Informe a descrição do lançamento.',
+            ]);
+
+        $this->assertDatabaseCount('transactions', 0);
+    }
+
+    public function test_rejects_transaction_descriptions_longer_than_one_hundred_characters_on_update(): void
+    {
+        $category = Category::factory()->create([
+            'type' => 'expense',
+        ]);
+        $transaction = Transaction::factory()->for($category)->create();
+
+        $this->from(route('dashboard', ['month' => '2026-05']))
+            ->put(route('transactions.update', [
+                'transaction' => $transaction,
+                'month' => '2026-05',
+            ]), [
+                'description' => str_repeat('a', 101),
+                'amount' => '10.00',
+                'type' => 'expense',
+                'date' => '2026-05-14',
+                'category_id' => $category->id,
+            ])
+            ->assertRedirectBack()
+            ->assertSessionHasErrors([
+                'description' => 'A descrição pode ter no máximo 100 caracteres.',
+            ]);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'description' => $transaction->description,
+        ]);
+    }
+
+    public function test_rejects_category_names_outside_the_three_to_one_hundred_character_range(): void
+    {
+        foreach ([
+            'ab' => 'O nome da categoria deve ter pelo menos 3 caracteres.',
+            str_repeat('a', 101) => 'O nome da categoria pode ter no máximo 100 caracteres.',
+        ] as $name => $message) {
+            $this->from(route('dashboard', ['month' => '2026-05']))
+                ->post(route('categories.store', ['month' => '2026-05']), [
+                    'name' => $name,
+                    'type' => 'expense',
+                    'color' => '#66804f',
+                ])
+                ->assertRedirectBack()
+                ->assertSessionHasErrors([
+                    'name' => $message,
+                ]);
+        }
+
+        $this->assertDatabaseCount('categories', 0);
+    }
+
+    public function test_rejects_category_names_containing_only_spaces(): void
+    {
+        $this->from(route('dashboard', ['month' => '2026-05']))
+            ->post(route('categories.store', ['month' => '2026-05']), [
+                'name' => '   ',
+                'type' => 'expense',
+                'color' => '#66804f',
+            ])
+            ->assertRedirectBack()
+            ->assertSessionHasErrors([
+                'name' => 'Informe o nome da categoria.',
+            ]);
+
+        $this->assertDatabaseCount('categories', 0);
+    }
+
+    public function test_rejects_invalid_transaction_amounts_without_storing_them(): void
+    {
+        $category = Category::factory()->create([
+            'type' => 'expense',
+        ]);
+
+        foreach ([
+            '-1.00' => 'O valor deve ser maior que zero.',
+            '0' => 'O valor deve ser maior que zero.',
+            '10.001' => 'O valor pode ter até duas casas decimais.',
+            'abc' => 'O valor precisa ser numérico.',
+            '10000000000.00' => 'O valor excede o limite permitido.',
+        ] as $amount => $message) {
+            $this->from(route('dashboard', ['month' => '2026-05']))
+                ->post(route('transactions.store', ['month' => '2026-05']), [
+                    'description' => 'Compra de mercado',
+                    'amount' => $amount,
+                    'type' => 'expense',
+                    'date' => '2026-05-14',
+                    'category_id' => $category->id,
+                ])
+                ->assertRedirectBack()
+                ->assertSessionHasErrors([
+                    'amount' => $message,
+                ]);
+        }
+
+        $this->assertDatabaseCount('transactions', 0);
+    }
+
+    public function test_rejects_nonexistent_transaction_dates_without_storing_them(): void
+    {
+        $category = Category::factory()->create([
+            'type' => 'expense',
+        ]);
+
+        foreach (['2026-02-31', '2026-13-01', '14/05/2026'] as $date) {
+            $this->from(route('dashboard', ['month' => '2026-05']))
+                ->post(route('transactions.store', ['month' => '2026-05']), [
+                    'description' => 'Compra de mercado',
+                    'amount' => '10.00',
+                    'type' => 'expense',
+                    'date' => $date,
+                    'category_id' => $category->id,
+                ])
+                ->assertRedirectBack()
+                ->assertSessionHasErrors([
+                    'date' => 'Informe uma data válida.',
+                ]);
+        }
+
+        $this->assertDatabaseCount('transactions', 0);
+    }
+
+    public function test_rejects_invalid_amount_and_date_on_update_without_changing_the_transaction(): void
+    {
+        $category = Category::factory()->create([
+            'type' => 'expense',
+        ]);
+        $transaction = Transaction::factory()->for($category)->create([
+            'description' => 'Compra original',
+            'amount' => '25.00',
+            'date' => '2026-05-10',
+        ]);
+
+        $this->from(route('dashboard', ['month' => '2026-05']))
+            ->put(route('transactions.update', [
+                'transaction' => $transaction,
+                'month' => '2026-05',
+            ]), [
+                'description' => 'Compra atualizada',
+                'amount' => '25.001',
+                'type' => 'expense',
+                'date' => '2026-02-31',
+                'category_id' => $category->id,
+            ])
+            ->assertRedirectBack()
+            ->assertSessionHasErrors([
+                'amount' => 'O valor pode ter até duas casas decimais.',
+                'date' => 'Informe uma data válida.',
+            ]);
+
+        $transaction->refresh();
+
+        $this->assertSame('Compra original', $transaction->description);
+        $this->assertSame('25.00', $transaction->amount);
+        $this->assertSame('2026-05-10', $transaction->date->format('Y-m-d'));
     }
 }

@@ -76,7 +76,26 @@ document.querySelectorAll('form').forEach((form) => {
 		return;
 	}
 
-	form.addEventListener('submit', () => {
+	const trimInputs = form.querySelectorAll('[data-trim]');
+
+	trimInputs.forEach((input) => {
+		input.addEventListener('blur', () => {
+			input.value = input.value.trim();
+		});
+	});
+
+	form.addEventListener('submit', (event) => {
+		trimInputs.forEach((input) => {
+			input.value = input.value.trim();
+		});
+
+		if (!form.checkValidity()) {
+			event.preventDefault();
+			form.reportValidity();
+
+			return;
+		}
+
 		const submitButton = form.querySelector('[type="submit"]');
 
 		if (submitButton && !submitButton.disabled) {
