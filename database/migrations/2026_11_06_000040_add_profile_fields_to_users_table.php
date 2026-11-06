@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
+            // Campos adicionais preenchidos no formulário de cadastro do aplicativo.
             $table->string('surname')->nullable();
             $table->string('address')->nullable();
             $table->unsignedTinyInteger('age')->nullable();

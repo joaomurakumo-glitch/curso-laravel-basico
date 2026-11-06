@@ -17,6 +17,7 @@ class CategoryFactory extends Factory
      */
     public function definition(): array
     {
+        // Valores padrão usados pelos testes quando a categoria não exige um cenário especial.
         return [
             'name' => fake()->unique()->word(),
             'type' => 'expense',

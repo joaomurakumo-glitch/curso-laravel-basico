@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+// Define os dados aceitos para gravação e esconde informações privadas ao serializar o usuário.
 #[Fillable(['name', 'surname', 'address', 'email', 'cpf', 'phone', 'age', 'password'])]
 #[Hidden(['cpf', 'phone', 'password', 'remember_token'])]
 class User extends Authenticatable
@@ -18,7 +19,9 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * Get the attributes that should be cast.
+     * Converte atributos sensíveis ou numéricos para os tipos usados pela aplicação.
+     *
+     * A senha é transformada em hash automaticamente; ela nunca deve ser salva em texto puro.
      *
      * @return array<string, string>
      */

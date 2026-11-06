@@ -25,9 +25,11 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            // Faker gera valores diferentes para os dados que precisam ser únicos nos testes.
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
+            // A senha é calculada uma vez e reaproveitada para acelerar a criação de vários usuários.
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
@@ -38,6 +40,7 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
+        // State permite criar um usuário ainda não verificado sem alterar os demais dados padrão.
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);

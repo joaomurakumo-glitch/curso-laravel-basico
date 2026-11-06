@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Exemplo de usuário útil em ambiente local; descomente para gerar usuários extras.
         // User::factory(10)->create();
 
         User::factory()->create([
@@ -22,6 +23,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
+        // Encaminha a criação das categorias iniciais para um seeder separado.
         $this->call(CategorySeeder::class);
     }
 }

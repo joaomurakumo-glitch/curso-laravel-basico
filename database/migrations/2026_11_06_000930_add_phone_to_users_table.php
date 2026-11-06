@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
+            // O telefone é salvo apenas com os 11 dígitos, sem a máscara exibida no formulário.
             $table->string('phone', 11)->nullable();
         });
     }

@@ -19,6 +19,7 @@ class TransactionFactory extends Factory
     public function definition(): array
     {
         return [
+            // Cria dados plausíveis para testes e gera uma categoria associada automaticamente.
             'description' => fake()->words(3, true),
             'amount' => fake()->randomFloat(2, 1, 1000),
             'type' => 'expense',

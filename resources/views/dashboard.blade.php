@@ -8,7 +8,9 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="finance-app">
+    {{-- Toda a tela fica dentro deste quadro, que organiza o menu lateral e o conteúdo principal. --}}
     <div class="app-frame">
+        {{-- Menu fixo com atalhos para o resumo, lançamentos e categorias. --}}
         <aside class="sidebar">
             <a class="brand" href="{{ route('dashboard') }}" aria-label="Saldo, início">
                 <span class="brand-mark" aria-hidden="true">s</span>
@@ -41,6 +43,7 @@
         </aside>
 
         <main class="main-content">
+            {{-- Cabeçalho com a localização da página, acesso ao cadastro e data de hoje. --}}
             <header class="topbar">
                 <div class="breadcrumbs"><span>FINANÇAS</span><span class="crumb-slash">/</span><strong>VISÃO GERAL</strong></div>
                 <div class="topbar-right">
@@ -63,6 +66,7 @@
                 </button>
             </section>
 
+            {{-- Mostra o resultado da última ação e oferece desfazer/refazer quando possível. --}}
             @if (session('status'))
                 <div class="flash-message" role="status">
                     <span>{{ session('status') }}</span>
@@ -82,6 +86,7 @@
                 </div>
             @endif
 
+            {{-- Resume os erros enviados pelo servidor; mensagens específicas também aparecem junto dos campos. --}}
             @if ($errors->any())
                 <div class="flash-message flash-error" role="alert" aria-labelledby="validation-summary-title">
                     <div>
@@ -96,6 +101,7 @@
                 </div>
             @endif
 
+            {{-- Os filtros são enviados por GET para que o período escolhido apareça na URL e possa ser compartilhado. --}}
             <section class="overview-toolbar" aria-label="Período do resumo">
                 <div class="month-switcher">
                     <a class="month-arrow" href="{{ route('dashboard', array_merge(request()->except(['start_date', 'end_date', 'page']), ['month' => \Carbon\CarbonImmutable::createFromFormat('Y-m', $month)->subMonth()->format('Y-m')])) }}" aria-label="Mês anterior">‹</a>
@@ -140,6 +146,7 @@
                 </form>
             </section>
 
+            {{-- Cartões com os totais calculados pelo controlador para o período atualmente selecionado. --}}
             <section class="summary-grid" aria-label="Resumo de {{ $monthLabel }}">
                 <article class="summary-card summary-balance">
                     <div class="summary-topline"><span>Saldo do {{ $dateRangeApplied ? 'período' : 'mês' }}</span><span class="summary-icon balance-icon" aria-hidden="true">↑</span></div>
@@ -159,6 +166,7 @@
                 </article>
             </section>
 
+            {{-- Área principal: tabela dos lançamentos e resumo das despesas por categoria. --}}
             <section class="content-grid">
                 <article class="panel transaction-panel" id="transactions">
                     <div class="panel-heading">
@@ -169,6 +177,7 @@
                         <span class="result-count">{{ $transactions->total() }} registros</span>
                     </div>
 
+                    {{-- A tabela só é exibida quando existem resultados; caso contrário mostramos uma orientação. --}}
                     @if ($transactions->isNotEmpty())
                         <div class="transaction-table-wrap">
                             <table class="transaction-table">
@@ -186,6 +195,7 @@
                                         <tr>
                                             <td>
                                                 <div class="transaction-description">
+                                                    {{-- Seta, cor e sinal deixam claro se o valor entrou ou saiu. --}}
                                                     <span class="transaction-mark {{ $transaction->type === 'income' ? 'mark-income' : 'mark-expense' }}" aria-hidden="true">{{ $transaction->type === 'income' ? '↑' : '↓' }}</span>
                                                     <span>
                                                         <strong>{{ $transaction->description }}</strong>
@@ -201,6 +211,7 @@
                                                 {{ $transaction->type === 'income' ? '+' : '−' }} R$ {{ number_format((float) $transaction->amount, 2, ',', '.') }}
                                             </td>
                                             <td class="row-actions">
+                                                {{-- Os atributos data-* transportam os dados para o JavaScript preencher o modal de edição. --}}
                                                 <button
                                                     class="text-action edit-transaction"
                                                     type="button"
@@ -212,6 +223,7 @@
                                                     data-category-id="{{ $transaction->category_id }}"
                                                     data-notes="{{ $transaction->notes }}"
                                                 >Editar</button>
+                                                {{-- O navegador envia POST e o campo oculto do Laravel converte a operação em DELETE. --}}
                                                 <form class="delete-form" action="{{ route('transactions.destroy', array_merge(['transaction' => $transaction->id], request()->query())) }}" method="POST">
                                                     @csrf
                                                     @method('DELETE')
@@ -224,6 +236,7 @@
                             </table>
                         </div>
                         @if ($transactions->hasPages())
+                            {{-- Links de paginação mantêm na URL os filtros já aplicados. --}}
                             <div class="pagination-row">
                                 <span>Página {{ $transactions->currentPage() }} de {{ $transactions->lastPage() }}</span>
                                 <div class="pagination-actions">
@@ -259,6 +272,7 @@
                         <span class="panel-spark" aria-hidden="true">✳</span>
                     </div>
                     @if ($topExpenseCategories->isNotEmpty())
+                        {{-- A maior despesa serve como referência para calcular a largura proporcional de cada barra. --}}
                         @php($maxExpenseTotal = max((float) $topExpenseCategories->max('total'), 1))
                         <div class="category-breakdown">
                             @foreach ($topExpenseCategories as $expenseCategory)
@@ -290,10 +304,13 @@
         </main>
     </div>
 
+    {{-- Um único formulário serve tanto para criar quanto editar; o JavaScript troca ação e campos quando necessário. --}}
     <dialog class="app-dialog" id="transaction-dialog" aria-labelledby="transaction-dialog-title" data-reopen="{{ $errors->has('description') || $errors->has('amount') || $errors->has('date') || $errors->has('category_id') || $errors->has('notes') || ($errors->has('type') && old('description') !== null) ? 'true' : 'false' }}">
         <form class="dialog-form" id="transaction-form" method="POST" action="{{ route('transactions.store', request()->only(['month', 'type', 'category'])) }}" data-store-url="{{ route('transactions.store', request()->only(['month', 'type', 'category'])) }}">
             @csrf
+            {{-- O Laravel usa este campo para distinguir uma edição (PUT) de um cadastro (POST). --}}
             <input id="transaction-method" type="hidden" name="_method" value="">
+            {{-- Estes campos preservam o contexto do painel ao voltar depois de salvar. --}}
             <input type="hidden" name="month" value="{{ $month }}">
             <input type="hidden" name="return_type" value="{{ $typeFilter }}">
             <input type="hidden" name="return_category" value="{{ $categoryFilter }}">
@@ -304,6 +321,7 @@
                 </div>
                 <button class="dialog-close" type="button" data-close-dialog aria-label="Fechar">×</button>
             </div>
+            {{-- As opções são botões visuais; este campo oculto contém o valor enviado ao servidor. --}}
             <div class="type-switch" role="group" aria-label="Tipo do lançamento" aria-invalid="{{ $errors->has('type') && old('description') !== null ? 'true' : 'false' }}" @if ($errors->has('type') && old('description') !== null) aria-describedby="transaction-type-error" tabindex="-1" @endif>
                 <button class="type-option {{ old('type', 'expense') === 'expense' ? 'is-selected' : '' }}" type="button" data-type-option="expense" aria-pressed="{{ old('type', 'expense') === 'expense' ? 'true' : 'false' }}">Despesa</button>
                 <button class="type-option {{ old('type') === 'income' ? 'is-selected' : '' }}" type="button" data-type-option="income" aria-pressed="{{ old('type') === 'income' ? 'true' : 'false' }}">Receita</button>
@@ -357,6 +375,7 @@
         </form>
     </dialog>
 
+    {{-- Este modal lista categorias existentes e contém o formulário para adicionar outra categoria. --}}
     <dialog class="app-dialog category-dialog" id="category-dialog" aria-labelledby="category-dialog-title" data-reopen="{{ $errors->has('name') || $errors->has('color') || ($errors->has('type') && old('name') !== null) ? 'true' : 'false' }}">
         <div class="dialog-heading">
             <div>
@@ -377,6 +396,7 @@
         </div>
         <form class="new-category-form" method="POST" action="{{ route('categories.store', request()->only(['month', 'type', 'category'])) }}">
             @csrf
+            {{-- Mantém os filtros atuais para que a pessoa continue no mesmo contexto após cadastrar. --}}
             <input type="hidden" name="month" value="{{ $month }}">
             <input type="hidden" name="return_type" value="{{ $typeFilter }}">
             <input type="hidden" name="return_category" value="{{ $categoryFilter }}">

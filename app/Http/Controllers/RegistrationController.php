@@ -11,13 +11,20 @@ use Illuminate\View\View;
 
 class RegistrationController extends Controller
 {
+    /**
+     * Exibe o formulário de cadastro.
+     */
     public function create(): View
     {
         return view('auth.register');
     }
 
+    /**
+     * Normaliza documentos, valida os dados e cria o cadastro.
+     */
     public function store(Request $request): RedirectResponse
     {
+        // A tela aceita números com ou sem máscara; o banco guarda somente os dígitos.
         $cpf = $request->input('cpf');
 
         if (is_string($cpf)) {
@@ -30,6 +37,7 @@ class RegistrationController extends Controller
             $request->merge(['phone' => ValidPhone::normalize($phone)]);
         }
 
+        // Confere formato, limites e unicidade antes de criar a pessoa no banco.
         $validated = $request->validate([
             'name' => ['required', 'string', 'min:3', 'max:100'],
             'surname' => ['required', 'string', 'min:3', 'max:100'],
@@ -64,6 +72,7 @@ class RegistrationController extends Controller
             'password.confirmed' => 'A confirmação da senha não corresponde.',
         ]);
 
+        // O atributo password do modelo é convertido para hash antes de ser salvo.
         User::query()->create($validated);
 
         return to_route('register')

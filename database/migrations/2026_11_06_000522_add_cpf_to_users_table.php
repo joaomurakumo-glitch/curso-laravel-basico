@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
+            // O número único evita que a mesma pessoa seja cadastrada mais de uma vez.
             $table->string('cpf', 11)->nullable()->unique();
         });
     }

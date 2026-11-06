@@ -3,6 +3,7 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/* Cores e fontes reutilizadas no site; trocar aqui atualiza todos os elementos que usam essas variáveis. */
 :root {
     color-scheme: light;
     --paper: #f5f7f3;
@@ -25,6 +26,7 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+/* Regras básicas para que os tamanhos dos elementos e dos campos sejam previsíveis. */
 * {
     box-sizing: border-box;
 }
@@ -61,6 +63,7 @@ a {
     text-decoration: none;
 }
 
+/* Estrutura geral do painel e navegação lateral. */
 .finance-app {
     min-height: 100vh;
     background: linear-gradient(135deg, #f7f8f5 0%, var(--paper) 60%, #f0f4ef 100%);
@@ -84,6 +87,7 @@ a {
     backdrop-filter: blur(16px);
 }
 
+/* Marca, ícones e textos de apoio que ficam no menu. */
 .brand {
     display: inline-flex;
     width: fit-content;
@@ -227,6 +231,7 @@ a {
     padding: 0 48px 23px;
 }
 
+/* Cabeçalho do painel com data, perfil e navegação de contexto. */
 .topbar {
     display: flex;
     height: 74px;
@@ -307,6 +312,7 @@ a {
     font-size: 13px;
 }
 
+/* Aparência comum dos botões e de seus estados (hover, foco e desabilitado). */
 .button {
     display: inline-flex;
     min-height: 40px;
@@ -384,6 +390,7 @@ a {
     color: var(--soft-ink);
 }
 
+/* Avisos de sucesso e validação, incluindo os controles para dispensá-los. */
 .flash-message {
     display: flex;
     align-items: center;
@@ -451,6 +458,7 @@ a {
     padding-left: 17px;
 }
 
+/* Controles de mês, datas, tipo e categoria usados para filtrar os dados do painel. */
 .overview-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -562,6 +570,7 @@ a {
     max-width: 170px;
 }
 
+/* Layout e campos da página de criação de cadastro. */
 .registration-page {
     min-height: 100vh;
     padding: 40px 18px;
@@ -645,6 +654,7 @@ a {
     text-underline-offset: 3px;
 }
 
+/* Cartões de saldo, receitas e despesas. */
 .summary-grid {
     display: grid;
     grid-template-columns: 1.25fr 1fr 1fr;
@@ -777,6 +787,7 @@ a {
     height: 23px;
 }
 
+/* Tabela de lançamentos, paginação e estado vazio quando não há dados. */
 .content-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.85fr) minmax(265px, .9fr);
@@ -1070,6 +1081,7 @@ a {
     line-height: 1.55;
 }
 
+/* Lista visual que compara as despesas agrupadas por categoria. */
 .category-panel {
     padding-bottom: 14px;
 }
@@ -1207,6 +1219,7 @@ a {
     font-style: normal;
 }
 
+/* Janelas modais para criar/editar lançamentos e administrar categorias. */
 .app-dialog {
     width: min(100% - 28px, 495px);
     max-height: min(88vh, 760px);
@@ -1376,6 +1389,7 @@ a {
     margin-top: 21px;
 }
 
+/* Lista e formulário de criação dentro do modal de categorias. */
 .category-dialog {
     width: min(100% - 28px, 620px);
     padding: 24px;
@@ -1458,6 +1472,7 @@ textarea:focus-visible {
     outline-offset: 2px;
 }
 
+/* Animações curtas usadas ao revelar conteúdo e abrir os modais. */
 @keyframes rise-in {
     from {
         opacity: 0;
@@ -1482,6 +1497,7 @@ textarea:focus-visible {
     }
 }
 
+/* Ajusta a navegação e os painéis para caberem em telas médias. */
 @media (max-width: 1160px) {
     .sidebar {
         width: 205px;
@@ -1616,6 +1632,7 @@ textarea:focus-visible {
     }
 }
 
+/* Em telas pequenas, reorganiza filtros, cartões e tabela para evitar estouro lateral. */
 @media (max-width: 620px) {
     .sidebar {
         justify-content: space-between;
@@ -1834,6 +1851,7 @@ textarea:focus-visible {
     }
 }
 
+/* Em celulares estreitos, empilha as categorias em uma única coluna. */
 @media (max-width: 390px) {
     .sidebar {
         padding-right: 10px;
@@ -1855,6 +1873,7 @@ textarea:focus-visible {
     }
 }
 
+/* O formulário de cadastro também vira uma coluna em telas pequenas. */
 @media (max-width: 560px) {
     .registration-page {
         padding: 25px 14px;
@@ -1875,6 +1894,7 @@ textarea:focus-visible {
 
 }
 
+/* Respeita a preferência do sistema por movimento reduzido. */
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

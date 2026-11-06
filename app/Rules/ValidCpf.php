@@ -8,8 +8,12 @@ use Illuminate\Translation\PotentiallyTranslatedString;
 
 class ValidCpf implements ValidationRule
 {
+    /**
+     * Converte a forma pontuada para 11 dígitos, se a máscara recebida for válida.
+     */
     public static function normalize(string $cpf): string
     {
+        // Um CPF sem máscara já está no formato que a regra de validação espera.
         if (preg_match('/^\d{11}$/D', $cpf) === 1) {
             return $cpf;
         }
@@ -22,12 +26,13 @@ class ValidCpf implements ValidationRule
     }
 
     /**
-     * Run the validation rule.
+     * Confere o formato e os dois dígitos verificadores do CPF.
      *
      * @param  Closure(string, ?string=): PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+        // Primeiro garante que existem exatamente 11 números; sem isso não há como calcular.
         if (! is_string($value) || preg_match('/^\d{11}$/D', $value) !== 1) {
             $fail('O CPF informado é inválido.');
 
@@ -42,6 +47,7 @@ class ValidCpf implements ValidationRule
 
         $digits = str_split($value);
 
+        // Para cada dígito verificador, multiplica os números anteriores por pesos decrescentes.
         foreach ([9, 10] as $length) {
             $sum = 0;
 
@@ -49,6 +55,7 @@ class ValidCpf implements ValidationRule
                 $sum += (int) $digits[$index] * ($length + 1 - $index);
             }
 
+            // O resto da divisão determina o dígito esperado; resto 10 vira zero.
             $remainder = ($sum * 10) % 11;
             $checkDigit = $remainder === 10 ? 0 : $remainder;
 

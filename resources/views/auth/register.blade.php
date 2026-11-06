@@ -8,6 +8,7 @@
     @vite(['resources/css/app.css', 'resources/js/enhanced-forms.js'])
 </head>
 <body class="registration-page">
+    {{-- Centraliza o formulário para manter o cadastro legível em telas grandes e pequenas. --}}
     <main class="registration-shell">
         <a class="brand registration-brand" href="{{ route('dashboard') }}" aria-label="Saldo, início">
             <span class="brand-mark" aria-hidden="true">s</span>
@@ -19,10 +20,12 @@
             <h1 id="registration-title">Criar cadastro<span class="heading-period">.</span></h1>
             <p class="registration-copy">Preencha seus dados para criar seu cadastro.</p>
 
+            {{-- Mensagem de sucesso após salvar o cadastro. --}}
             @if (session('status'))
                 <div class="flash-message" role="status">{{ session('status') }}</div>
             @endif
 
+            {{-- Mostra todos os erros devolvidos pelo servidor sem esconder nenhum campo inválido. --}}
             @if ($errors->any())
                 <div class="flash-message flash-error" role="alert" aria-labelledby="registration-errors-title">
                     <strong id="registration-errors-title">Não foi possível concluir o cadastro. Confira os campos:</strong>
@@ -34,9 +37,11 @@
                 </div>
             @endif
 
+            {{-- O token CSRF protege o formulário contra envios forjados de outros sites. --}}
             <form method="POST" action="{{ route('register.store') }}">
                 @csrf
                 <div class="registration-grid">
+                    {{-- Dados pessoais básicos. old() recupera o valor digitado se a validação falhar. --}}
                     <div>
                         <label class="field-label" for="registration-name">Nome</label>
                         <input class="text-input" id="registration-name" name="name" type="text" minlength="3" maxlength="100" autocomplete="given-name" value="{{ old('name') }}" required aria-invalid="{{ $errors->has('name') ? 'true' : 'false' }}" @if ($errors->has('name')) aria-describedby="registration-name-error" @endif>
@@ -65,6 +70,7 @@
                             <p class="field-error" id="registration-email-error">{{ $message }}</p>
                         @enderror
                     </div>
+                    {{-- CPF e telefone aceitam máscara na tela; o servidor normaliza e valida os números. --}}
                     <div class="registration-field-full">
                         <label class="field-label" for="registration-cpf">CPF</label>
                         <input class="text-input" id="registration-cpf" name="cpf" type="text" inputmode="numeric" minlength="11" maxlength="14" pattern="[0-9]{11}|[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2}" placeholder="000.000.000-00" autocomplete="off" value="{{ old('cpf') }}" required aria-describedby="registration-cpf-hint{{ $errors->has('cpf') ? ' registration-cpf-error' : '' }}" aria-invalid="{{ $errors->has('cpf') ? 'true' : 'false' }}">
@@ -80,6 +86,7 @@
                             <p class="field-error" id="registration-phone-error">{{ $message }}</p>
                         @enderror
                     </div>
+                    {{-- Idade e senha têm limites no navegador; o servidor repete a validação por segurança. --}}
                     <div>
                         <label class="field-label" for="registration-age">Idade</label>
                         <input class="text-input" id="registration-age" name="age" type="number" min="18" max="100" step="1" value="{{ old('age') }}" required aria-invalid="{{ $errors->has('age') ? 'true' : 'false' }}" @if ($errors->has('age')) aria-describedby="registration-age-error" @endif>

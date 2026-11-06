@@ -10,9 +10,12 @@ use Illuminate\Validation\Rule;
 
 class CategoryController extends Controller
 {
-    //
+    /**
+     * Valida e cria uma categoria, mantendo os filtros atuais ao voltar ao painel.
+     */
     public function store(Request $request): RedirectResponse
     {
+        // A unicidade é verificada por tipo para permitir, por exemplo, "Outros" em receitas e despesas.
         $validated = $request->validate([
             'name' => [
                 'required',
@@ -38,6 +41,7 @@ class CategoryController extends Controller
 
         Category::query()->create($validated);
 
+        // Preserva somente os filtros que podem ser usados na navegação do painel.
         return to_route('dashboard', array_filter([
             'month' => $request->query('month'),
             'type' => $request->query('type'),

@@ -12,6 +12,7 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
+        // Categorias iniciais para que o painel possa ser usado logo após a preparação do banco.
         $categories = [
             ['name' => 'Salário', 'type' => 'income', 'color' => '#477A62'],
             ['name' => 'Freelance', 'type' => 'income', 'color' => '#5477A5'],
@@ -26,6 +27,7 @@ class CategorySeeder extends Seeder
             ['name' => 'Outras despesas', 'type' => 'expense', 'color' => '#78838A'],
         ];
 
+        // updateOrCreate evita duplicar uma categoria se o seeder for executado novamente.
         foreach ($categories as $category) {
             Category::query()->updateOrCreate(
                 ['name' => $category['name'], 'type' => $category['type']],

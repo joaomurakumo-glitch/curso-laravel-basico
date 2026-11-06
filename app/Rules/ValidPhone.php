@@ -8,8 +8,12 @@ use Illuminate\Translation\PotentiallyTranslatedString;
 
 class ValidPhone implements ValidationRule
 {
+    /**
+     * Remove a máscara visual quando o telefone está em um dos formatos aceitos.
+     */
     public static function normalize(string $phone): string
     {
+        // O formato simples já contém apenas os números necessários.
         if (preg_match('/^\d{11}$/D', $phone) === 1) {
             return $phone;
         }
@@ -22,12 +26,13 @@ class ValidPhone implements ValidationRule
     }
 
     /**
-     * Run the validation rule.
+     * Exige DDD e 11 dígitos, com o nono dígito indicando um celular.
      *
      * @param  Closure(string, ?string=): PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+        // O DDD ocupa os dois primeiros dígitos; o terceiro deve ser 9 para celulares.
         if (
             ! is_string($value)
             || preg_match('/^\d{11}$/D', $value) !== 1

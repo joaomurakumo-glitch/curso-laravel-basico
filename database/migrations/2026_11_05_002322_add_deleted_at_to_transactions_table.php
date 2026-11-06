@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
+            // Permite excluir sem apagar definitivamente, para que o lançamento possa ser restaurado.
             $table->softDeletes();
         });
     }
