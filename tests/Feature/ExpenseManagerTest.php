@@ -450,4 +450,93 @@ class ExpenseManagerTest extends TestCase
         $this->assertSame('25.00', $transaction->amount);
         $this->assertSame('2026-05-10', $transaction->date->format('Y-m-d'));
     }
+
+    public function test_dashboard_filters_transactions_between_inclusive_start_and_end_dates(): void
+    {
+        $category = Category::factory()->create([
+            'type' => 'expense',
+        ]);
+
+        foreach ([
+            '2026-05-02' => 'Antes do período',
+            '2026-05-03' => 'Início do período',
+            '2026-05-05' => 'Fim do período',
+            '2026-05-06' => 'Depois do período',
+        ] as $date => $description) {
+            Transaction::factory()->for($category)->create([
+                'description' => $description,
+                'date' => $date,
+            ]);
+        }
+
+        $this->get(route('dashboard', [
+            'month' => '2026-05',
+            'start_date' => '2026-05-03',
+            'end_date' => '2026-05-05',
+        ]))
+            ->assertOk()
+            ->assertSee('Início do período')
+            ->assertSee('Fim do período')
+            ->assertDontSee('Antes do período')
+            ->assertDontSee('Depois do período')
+            ->assertSee('03/05/2026 até 05/05/2026');
+    }
+
+    public function test_dashboard_allows_a_single_day_date_range(): void
+    {
+        $category = Category::factory()->create([
+            'type' => 'expense',
+        ]);
+        Transaction::factory()->for($category)->create([
+            'description' => 'Compra do dia',
+            'date' => '2026-05-05',
+        ]);
+
+        $this->assertDatabaseHas('transactions', [
+            'description' => 'Compra do dia',
+            'date' => '2026-05-05 00:00:00',
+        ]);
+
+        $this->get(route('dashboard', [
+            'month' => '2026-05',
+            'start_date' => '2026-05-05',
+            'end_date' => '2026-05-05',
+        ]))
+            ->assertOk()
+            ->assertSee('Compra do dia')
+            ->assertSee('05/05/2026 até 05/05/2026');
+    }
+
+    public function test_dashboard_rejects_incomplete_invalid_and_inconsistent_date_ranges(): void
+    {
+        foreach ([
+            [
+                ['start_date' => '2026-05-05'],
+                'end_date',
+                'Informe a data final para filtrar o período.',
+            ],
+            [
+                ['end_date' => '2026-05-05'],
+                'start_date',
+                'Informe a data inicial para filtrar o período.',
+            ],
+            [
+                ['start_date' => '2026-02-31', 'end_date' => '2026-03-01'],
+                'start_date',
+                'Informe uma data inicial válida.',
+            ],
+            [
+                ['start_date' => '2026-05-10', 'end_date' => '2026-05-09'],
+                'end_date',
+                'A data final não pode ser anterior à data inicial.',
+            ],
+        ] as [$dateRange, $field, $message]) {
+            $this->from(route('dashboard'))
+                ->get(route('dashboard', $dateRange))
+                ->assertRedirectBack()
+                ->assertSessionHasErrors([
+                    $field => $message,
+                ]);
+        }
+    }
 }

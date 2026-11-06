@@ -44,6 +44,8 @@
             <header class="topbar">
                 <div class="breadcrumbs"><span>FINANÇAS</span><span class="crumb-slash">/</span><strong>VISÃO GERAL</strong></div>
                 <div class="topbar-right">
+                    <a class="button button-filter" href="{{ route('register') }}">Criar cadastro</a>
+                    <a class="button button-filter" href="{{ route('inventory.items.index') }}">Estoque</a>
                     <span class="today-label">{{ now()->locale('pt_BR')->translatedFormat('l, d \d\e F') }}</span>
                     <span class="avatar" aria-label="Perfil pessoal">EU</span>
                 </div>
@@ -97,14 +99,22 @@
 
             <section class="overview-toolbar" aria-label="Período do resumo">
                 <div class="month-switcher">
-                    <a class="month-arrow" href="{{ route('dashboard', array_merge(request()->query(), ['month' => \Carbon\CarbonImmutable::createFromFormat('Y-m', $month)->subMonth()->format('Y-m')])) }}" aria-label="Mês anterior">‹</a>
+                    <a class="month-arrow" href="{{ route('dashboard', array_merge(request()->except(['start_date', 'end_date', 'page']), ['month' => \Carbon\CarbonImmutable::createFromFormat('Y-m', $month)->subMonth()->format('Y-m')])) }}" aria-label="Mês anterior">‹</a>
                     <span class="month-label">{{ $monthLabel }}</span>
-                    <a class="month-arrow" href="{{ route('dashboard', array_merge(request()->query(), ['month' => \Carbon\CarbonImmutable::createFromFormat('Y-m', $month)->addMonth()->format('Y-m')])) }}" aria-label="Próximo mês">›</a>
+                    <a class="month-arrow" href="{{ route('dashboard', array_merge(request()->except(['start_date', 'end_date', 'page']), ['month' => \Carbon\CarbonImmutable::createFromFormat('Y-m', $month)->addMonth()->format('Y-m')])) }}" aria-label="Próximo mês">›</a>
                 </div>
-                <form class="filter-form" action="{{ route('dashboard') }}" method="GET">
+                <form class="filter-form" id="date-range-filter" action="{{ route('dashboard') }}" method="GET">
                     <label class="filter-control filter-month">
                         <span class="sr-only">Mês</span>
                         <input type="month" name="month" value="{{ $month }}" aria-label="Filtrar por mês">
+                    </label>
+                    <label class="filter-control filter-date">
+                        <span class="sr-only">Data inicial</span>
+                        <input type="date" name="start_date" value="{{ $startDate }}" aria-label="Data inicial" @if ($dateRangeApplied) required @endif>
+                    </label>
+                    <label class="filter-control filter-date">
+                        <span class="sr-only">Data final</span>
+                        <input type="date" name="end_date" value="{{ $endDate }}" aria-label="Data final" @if ($dateRangeApplied) required @endif>
                     </label>
                     <label class="filter-control">
                         <span class="sr-only">Tipo</span>
@@ -124,7 +134,7 @@
                         </select>
                     </label>
                     <button class="button button-filter" type="submit">Filtrar</button>
-                    @if ($typeFilter !== '' || $categoryFilter !== '')
+                    @if ($typeFilter !== '' || $categoryFilter !== '' || $dateRangeApplied)
                         <a class="clear-filters" href="{{ route('dashboard', ['month' => $month]) }}">Limpar</a>
                     @endif
                 </form>
@@ -132,7 +142,7 @@
 
             <section class="summary-grid" aria-label="Resumo de {{ $monthLabel }}">
                 <article class="summary-card summary-balance">
-                    <div class="summary-topline"><span>Saldo do mês</span><span class="summary-icon balance-icon" aria-hidden="true">↑</span></div>
+                    <div class="summary-topline"><span>Saldo do {{ $dateRangeApplied ? 'período' : 'mês' }}</span><span class="summary-icon balance-icon" aria-hidden="true">↑</span></div>
                     <p class="summary-value">R$ {{ number_format((float) $balanceTotal, 2, ',', '.') }}</p>
                     <p class="summary-caption">Receitas menos despesas</p>
                     <div class="balance-rule" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
@@ -274,7 +284,7 @@
             </section>
 
             <footer class="page-footer">
-                <span>Seu resumo considera todos os lançamentos do mês selecionado.</span>
+                <span>Seu resumo considera todos os lançamentos de {{ $dateRangeApplied ? 'todo o período selecionado' : 'todo o mês selecionado' }}.</span>
                 <span>Valores em reais</span>
             </footer>
         </main>

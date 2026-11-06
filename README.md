@@ -72,10 +72,24 @@ Os formulários de lançamento e categoria não tinham um limite mínimo de cara
 - O navegador complementa a validação com limites HTML e normalização JavaScript. As mensagens do servidor continuam sendo a garantia de integridade.
 - Testes cobrem limites de texto, valores inválidos, datas inexistentes, normalização e rejeição de alterações inválidas.
 
-### Limite do escopo atual
+### Cadastro, período e controle de estoque
 
-O CRUD existente registra receitas, despesas e categorias. Ele não possui cadastro de pessoas, produtos ou vendas nem campos de e-mail, idade, nascimento, CPF, CEP, telefone, estoque, desconto ou período inicial/final. Essas regras não foram associadas artificialmente a um lançamento financeiro; para validá-las e armazená-las, é necessário criar os cadastros correspondentes.
+#### Antes
 
-### Verificação
+O cadastro de usuário não coletava telefone celular. O painel filtrava lançamentos apenas por mês, e a aplicação não tinha produtos, saldo de estoque, saídas ou cálculo de desconto.
 
-Execute `php artisan test --compact tests/Feature/ExpenseManagerTest.php` para validar os cenários do CRUD financeiro.
+#### Depois
+
+- O telefone é obrigatório e aceita 11 dígitos com ou sem a máscara `(DD) 9XXXX-XXXX`. O servidor confere o formato e o nono dígito do celular, e salva somente os números. JavaScript aplica a máscara durante a digitação.
+- O painel aceita data inicial e final em conjunto. O servidor rejeita datas inválidas ou intervalos invertidos e inclui as duas extremidades; um único dia é válido.
+- O módulo `/estoque` permite cadastrar produtos com quantidade inicial inteira não negativa e registrar ou editar saídas. O servidor impede saídas maiores que o saldo, atualiza o estoque dentro de transação e recalcula a saída ao editar.
+- A saída exige desconto numérico entre 0% e 30%, com até duas casas decimais. O valor final é calculado com aritmética em centavos e salvo com duas casas decimais; JavaScript também apresenta uma prévia do total.
+- As validações do servidor impedem que entradas inválidas sejam persistidas. Os formulários também usam atributos HTML e JavaScript para orientar o preenchimento.
+
+#### Verificação
+
+`php artisan test --compact` cobre cadastro, máscara e validação de telefone, limites de datas, estoque insuficiente, atualização de saídas e cálculo de desconto. Após as alterações, a suíte completa passou com 40 testes e 366 asserções. `npm run build` também concluiu a geração dos assets.
+
+### Teste do CRUD financeiro
+
+Os cenários específicos do CRUD financeiro podem ser executados com `php artisan test --compact tests/Feature/ExpenseManagerTest.php`.
