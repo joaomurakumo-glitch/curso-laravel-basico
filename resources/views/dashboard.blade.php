@@ -45,7 +45,6 @@
                 <div class="breadcrumbs"><span>FINANÇAS</span><span class="crumb-slash">/</span><strong>VISÃO GERAL</strong></div>
                 <div class="topbar-right">
                     <a class="button button-filter" href="{{ route('register') }}">Criar cadastro</a>
-                    <a class="button button-filter" href="{{ route('inventory.items.index') }}">Estoque</a>
                     <span class="today-label">{{ now()->locale('pt_BR')->translatedFormat('l, d \d\e F') }}</span>
                     <span class="avatar" aria-label="Perfil pessoal">EU</span>
                 </div>
