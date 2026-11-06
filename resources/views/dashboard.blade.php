@@ -105,15 +105,15 @@
                 </div>
                 <form class="filter-form" id="date-range-filter" action="{{ route('dashboard') }}" method="GET">
                     <label class="filter-control filter-month">
-                        <span class="sr-only">Mês</span>
+                        <span class="filter-caption">Mês inteiro</span>
                         <input type="month" name="month" value="{{ $month }}" aria-label="Filtrar por mês">
                     </label>
                     <label class="filter-control filter-date">
-                        <span class="sr-only">Data inicial</span>
+                        <span class="filter-caption">Início do período</span>
                         <input type="date" name="start_date" value="{{ $startDate }}" aria-label="Data inicial" @if ($dateRangeApplied) required @endif>
                     </label>
                     <label class="filter-control filter-date">
-                        <span class="sr-only">Data final</span>
+                        <span class="filter-caption">Fim do período</span>
                         <input type="date" name="end_date" value="{{ $endDate }}" aria-label="Data final" @if ($dateRangeApplied) required @endif>
                     </label>
                     <label class="filter-control">
@@ -137,6 +137,7 @@
                     @if ($typeFilter !== '' || $categoryFilter !== '' || $dateRangeApplied)
                         <a class="clear-filters" href="{{ route('dashboard', ['month' => $month]) }}">Limpar</a>
                     @endif
+                    <span class="filter-explanation">O mês mostra o período mensal completo. Para consultar um período específico, informe o início e o fim; as duas datas são necessárias.</span>
                 </form>
             </section>
 

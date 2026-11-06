@@ -453,9 +453,11 @@ a {
 
 .overview-toolbar {
     display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
     min-height: 53px;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 18px;
     margin-bottom: 15px;
     padding: 0 14px;
@@ -503,7 +505,7 @@ a {
 }
 
 .filter-form {
-    justify-content: flex-end;
+    justify-content: center;
     flex-wrap: wrap;
     gap: 7px;
 }
@@ -519,6 +521,26 @@ a {
     background: #fff;
     color: #526158;
     font-size: 11px;
+}
+
+.filter-month,
+.filter-date {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.filter-caption {
+    color: #68766d;
+    font-size: 9px;
+    line-height: 1;
+}
+
+.filter-explanation {
+    flex-basis: 100%;
+    color: #68766d;
+    font-size: 10px;
+    text-align: right;
 }
 
 .filter-control select:focus,
