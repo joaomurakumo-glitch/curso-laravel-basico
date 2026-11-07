@@ -32,6 +32,12 @@
                     Categorias
                     <span class="nav-count">{{ $allCategories->count() }}</span>
                 </button>
+                @auth
+                    <a class="nav-link" href="{{ route('account.show') }}">
+                        <span class="nav-glyph" aria-hidden="true">◎</span>
+                        Minha conta
+                    </a>
+                @endauth
             </nav>
 
             <div class="sidebar-spacer"></div>
@@ -47,7 +53,13 @@
             <header class="topbar">
                 <div class="breadcrumbs"><span>FINANÇAS</span><span class="crumb-slash">/</span><strong>VISÃO GERAL</strong></div>
                 <div class="topbar-right">
-                    <a class="button button-filter" href="{{ route('register') }}">Criar cadastro</a>
+                    @include('partials.theme-toggle')
+                    @auth
+                        <a class="button button-filter" href="{{ route('account.show') }}">Minha conta</a>
+                    @else
+                        <a class="button button-filter" href="{{ route('login') }}">Entrar</a>
+                        <a class="button button-filter" href="{{ route('register') }}">Criar cadastro</a>
+                    @endauth
                     <span class="today-label">{{ now()->locale('pt_BR')->translatedFormat('l, d \d\e F') }}</span>
                     <span class="avatar" aria-label="Perfil pessoal">EU</span>
                 </div>

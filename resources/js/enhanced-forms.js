@@ -1,3 +1,5 @@
+import './theme-toggle.js';
+
 const phoneInput = document.querySelector('#registration-phone');
 
 // Aplica a máscara do celular durante a digitação sem ultrapassar os 11 dígitos.

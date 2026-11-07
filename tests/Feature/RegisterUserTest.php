@@ -18,6 +18,7 @@ class RegisterUserTest extends TestCase
             ->assertSee('name="name"', false)
             ->assertSee('name="surname"', false)
             ->assertSee('name="address"', false)
+            ->assertSee('name="cep"', false)
             ->assertSee('name="email"', false)
             ->assertSee('name="cpf"', false)
             ->assertSee('name="phone"', false)
@@ -30,6 +31,7 @@ class RegisterUserTest extends TestCase
             'name' => '  Ana  ',
             'surname' => '  Silva Santos  ',
             'address' => '  Rua das Flores, 123  ',
+            'cep' => '01001-000',
             'email' => '  ana@example.com  ',
             'cpf' => '529.982.247-25',
             'phone' => '(11) 91234-5678',
@@ -38,13 +40,14 @@ class RegisterUserTest extends TestCase
             'password_confirmation' => 'senha-segura-123',
         ]);
 
-        $response->assertRedirectToRoute('register')
+        $response->assertRedirectToRoute('account.show')
             ->assertSessionHas('status', 'Cadastro realizado com sucesso.');
 
         $this->assertDatabaseHas('users', [
             'name' => 'Ana',
             'surname' => 'Silva Santos',
             'address' => 'Rua das Flores, 123',
+            'cep' => '01001000',
             'email' => 'ana@example.com',
             'cpf' => '52998224725',
             'phone' => '11912345678',
@@ -53,8 +56,15 @@ class RegisterUserTest extends TestCase
 
         $user = User::query()->sole();
 
+        $this->assertAuthenticatedAs($user);
         $this->assertNotSame('senha-segura-123', $user->password);
         $this->assertTrue(Hash::check('senha-segura-123', $user->password));
+
+        $this->get(route('account.show'))
+            ->assertOk()
+            ->assertSee('Minha conta')
+            ->assertSee('01001-000')
+            ->assertSee('529.982.247-25');
     }
 
     public function test_registration_requires_all_profile_fields_and_password(): void
@@ -66,6 +76,7 @@ class RegisterUserTest extends TestCase
                 'name' => 'Informe seu nome.',
                 'surname' => 'Informe seu sobrenome.',
                 'address' => 'Informe seu endereço.',
+                'cep' => 'Informe seu CEP.',
                 'email' => 'Informe seu e-mail.',
                 'cpf' => 'Informe seu CPF.',
                 'phone' => 'Informe seu telefone celular.',
@@ -139,12 +150,15 @@ class RegisterUserTest extends TestCase
             $this->post(route('register.store'), $this->validRegistrationData([
                 'email' => $email,
                 'cpf' => $cpf['cpf'],
-            ]))->assertRedirectToRoute('register');
+            ]))->assertRedirectToRoute('account.show');
 
             $this->assertDatabaseHas('users', [
                 'email' => $email,
                 'cpf' => $cpf['stored'],
             ]);
+
+            $this->post(route('logout'))
+                ->assertRedirectToRoute('login');
         }
 
         $this->assertDatabaseCount('users', 2);
@@ -207,12 +221,15 @@ class RegisterUserTest extends TestCase
                 'email' => $email,
                 'cpf' => $contact['cpf'],
                 'phone' => $contact['phone'],
-            ]))->assertRedirectToRoute('register');
+            ]))->assertRedirectToRoute('account.show');
 
             $this->assertDatabaseHas('users', [
                 'email' => $email,
                 'phone' => preg_replace('/\D/', '', $contact['phone']),
             ]);
+
+            $this->post(route('logout'))
+                ->assertRedirectToRoute('login');
         }
 
         $this->assertDatabaseCount('users', 2);
@@ -262,6 +279,20 @@ class RegisterUserTest extends TestCase
         $this->assertDatabaseCount('users', 0);
     }
 
+    public function test_registration_rejects_a_postal_code_with_a_wrong_number_of_digits(): void
+    {
+        $this->from(route('register'))
+            ->post(route('register.store'), $this->validRegistrationData([
+                'cep' => '0100-100',
+            ]))
+            ->assertRedirectBack()
+            ->assertSessionHasErrors([
+                'cep' => 'Informe um CEP válido com 8 números.',
+            ]);
+
+        $this->assertDatabaseCount('users', 0);
+    }
+
     public function test_registration_rejects_a_password_confirmation_that_does_not_match(): void
     {
         $this->from(route('register'))
@@ -286,6 +317,7 @@ class RegisterUserTest extends TestCase
             'name' => 'Ana',
             'surname' => 'Silva Santos',
             'address' => 'Rua das Flores, 123',
+            'cep' => '01001-000',
             'email' => 'ana@example.com',
             'cpf' => '52998224725',
             'phone' => '11912345678',

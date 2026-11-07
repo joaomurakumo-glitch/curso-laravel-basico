@@ -7,6 +7,7 @@ use App\Rules\ValidCpf;
 use App\Rules\ValidPhone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class RegistrationController extends Controller
@@ -37,11 +38,19 @@ class RegistrationController extends Controller
             $request->merge(['phone' => ValidPhone::normalize($phone)]);
         }
 
+        // O CEP é salvo sem hífen para manter um formato único no banco de dados.
+        $cep = $request->input('cep');
+
+        if (is_string($cep)) {
+            $request->merge(['cep' => preg_replace('/\D/', '', $cep)]);
+        }
+
         // Confere formato, limites e unicidade antes de criar a pessoa no banco.
         $validated = $request->validate([
             'name' => ['required', 'string', 'min:3', 'max:100'],
             'surname' => ['required', 'string', 'min:3', 'max:100'],
             'address' => ['required', 'string', 'min:3', 'max:100'],
+            'cep' => ['required', 'string', 'regex:/^[0-9]{8}$/'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'cpf' => ['required', 'string', new ValidCpf, 'unique:users,cpf'],
             'phone' => ['required', 'string', new ValidPhone],
@@ -57,6 +66,8 @@ class RegistrationController extends Controller
             'address.required' => 'Informe seu endereço.',
             'address.min' => 'O endereço deve ter pelo menos 3 caracteres.',
             'address.max' => 'O endereço pode ter no máximo 100 caracteres.',
+            'cep.required' => 'Informe seu CEP.',
+            'cep.regex' => 'Informe um CEP válido com 8 números.',
             'email.required' => 'Informe seu e-mail.',
             'email.email' => 'Informe um endereço de e-mail válido.',
             'email.unique' => 'Este e-mail já está cadastrado.',
@@ -72,10 +83,13 @@ class RegistrationController extends Controller
             'password.confirmed' => 'A confirmação da senha não corresponde.',
         ]);
 
-        // O atributo password do modelo é convertido para hash antes de ser salvo.
-        User::query()->create($validated);
+        // O modelo protege a senha com hash; a conta também já fica autenticada após o cadastro.
+        $user = User::query()->create($validated);
+        Auth::login($user);
+        $request->session()->regenerate();
+        $request->session()->passwordConfirmed();
 
-        return to_route('register')
+        return to_route('account.show')
             ->with('status', 'Cadastro realizado com sucesso.');
     }
 }

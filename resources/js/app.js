@@ -1,3 +1,5 @@
+import './theme-toggle.js';
+
 const transactionDialog = document.querySelector('#transaction-dialog');
 const categoryDialog = document.querySelector('#category-dialog');
 const transactionForm = document.querySelector('#transaction-form');
@@ -130,14 +132,14 @@ document.querySelectorAll('dialog').forEach((dialog) => {
 });
 
 // Reabre o modal que teve erro de validação e direciona o foco ao primeiro campo inválido.
-if (document.querySelector('#transaction-dialog').dataset.reopen === 'true') {
+if (transactionDialog?.dataset.reopen === 'true') {
 	// Ao voltar de um erro, preserva o modal aberto para a pessoa corrigir o campo.
 	setTransactionType(transactionType.value);
 	transactionDialog.showModal();
 	transactionDialog.querySelector('[aria-invalid="true"]')?.focus();
 }
 
-if (document.querySelector('#category-dialog').dataset.reopen === 'true') {
+if (categoryDialog?.dataset.reopen === 'true') {
 	categoryDialog.showModal();
 	categoryDialog.querySelector('[aria-invalid="true"]')?.focus();
 }

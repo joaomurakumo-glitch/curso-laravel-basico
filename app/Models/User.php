@@ -11,8 +11,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 // Define os dados aceitos para gravação e esconde informações privadas ao serializar o usuário.
-#[Fillable(['name', 'surname', 'address', 'email', 'cpf', 'phone', 'age', 'password'])]
-#[Hidden(['cpf', 'phone', 'password', 'remember_token'])]
+#[Fillable(['name', 'surname', 'address', 'cep', 'email', 'cpf', 'phone', 'age', 'password'])]
+#[Hidden(['cep', 'cpf', 'phone', 'password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */

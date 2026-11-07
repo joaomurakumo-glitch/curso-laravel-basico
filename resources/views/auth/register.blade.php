@@ -8,6 +8,7 @@
     @vite(['resources/css/app.css', 'resources/js/enhanced-forms.js'])
 </head>
 <body class="registration-page">
+    @include('partials.theme-toggle')
     {{-- Centraliza o formulário para manter o cadastro legível em telas grandes e pequenas. --}}
     <main class="registration-shell">
         <a class="brand registration-brand" href="{{ route('dashboard') }}" aria-label="Saldo, início">
@@ -64,6 +65,13 @@
                         @enderror
                     </div>
                     <div class="registration-field-full">
+                        <label class="field-label" for="registration-cep">CEP</label>
+                        <input class="text-input" id="registration-cep" name="cep" type="text" inputmode="numeric" minlength="8" maxlength="9" pattern="[0-9]{5}-?[0-9]{3}" placeholder="00000-000" autocomplete="postal-code" value="{{ old('cep') }}" required aria-invalid="{{ $errors->has('cep') ? 'true' : 'false' }}" @if ($errors->has('cep')) aria-describedby="registration-cep-error" @endif>
+                        @error('cep')
+                            <p class="field-error" id="registration-cep-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div class="registration-field-full">
                         <label class="field-label" for="registration-email">E-mail</label>
                         <input class="text-input" id="registration-email" name="email" type="email" maxlength="255" autocomplete="email" value="{{ old('email') }}" required aria-invalid="{{ $errors->has('email') ? 'true' : 'false' }}" @if ($errors->has('email')) aria-describedby="registration-email-error" @endif>
                         @error('email')
@@ -111,6 +119,7 @@
             </form>
 
             <a class="registration-back" href="{{ route('dashboard') }}">Voltar para a página inicial</a>
+            <a class="registration-back" href="{{ route('login') }}">Já tenho uma conta</a>
         </section>
     </main>
 </body>
